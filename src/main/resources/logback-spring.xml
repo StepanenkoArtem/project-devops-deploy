@@ -15,7 +15,7 @@
                 </pattern>
                 <loggerName/>
                 <threadName/>
-                <level/>
+                <logLevel/>
                 <message/>
                 <mdc/>
                 <arguments/>
