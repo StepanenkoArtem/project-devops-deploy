@@ -1,4 +1,4 @@
-name: CI
+name: Docker
 
 on:
   push:
@@ -7,44 +7,11 @@ on:
     branches: ["main"]
 
 env:
-  JAVA_VERSION: "21"
-  JAVA_DISTRIBUTION: "temurin"
   APP_NAME: 'bulletins'
-  CACHE: gradle
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v5
-      - name: Prepare env
-        uses: actions/setup-java@v5
-        with:
-          distribution: ${{ env.JAVA_DISTRIBUTION }}
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: ${{ env.CACHE }}
-
-      - name: Run linter
-        run: make lint
-
-  tests:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v5
-      - name: Prepare test env
-        uses: actions/setup-java@v5
-        with:
-          distribution: ${{ env.JAVA_DISTRIBUTION }}
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: ${{ env.CACHE }}
-      - name: Run tests
-        run: make test
-
   build:
     runs-on: ubuntu-latest
-    needs: [lint, tests]
 
     steps:
       - name: Set up Docker Buildx
