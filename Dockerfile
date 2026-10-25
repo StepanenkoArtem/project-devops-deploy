@@ -10,12 +10,12 @@ RUN npm run build
 # Stage 2: Build Java App
 FROM eclipse-temurin:21-jdk AS build_app
 WORKDIR /app
-RUN rm -rf src/main/resources/static && mkdir -p src/main/resources/static
-COPY --from=frontend /app/dist src/main/resources/static
 COPY gradlew build.gradle.kts ./
 COPY gradle ./gradle
 RUN ./gradlew --no-daemon dependencies
 COPY src ./src
+RUN rm -rf src/main/resources/static
+COPY --from=frontend /app/dist src/main/resources/static
 RUN ./gradlew --no-daemon build
 RUN cp build/libs/app-*-SNAPSHOT.jar app.jar
 
@@ -25,6 +25,7 @@ WORKDIR /app
 RUN useradd -u 1001 -r -m app
 USER app
 COPY --from=build_app --chown=app:app /app/app.jar app.jar
-EXPOSE 8080
+ENV SERVER_PORT=8080 MANAGEMENT_SERVER_PORT=9090
+EXPOSE ${SERVER_PORT} ${MANAGEMENT_SERVER_PORT}
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar \"$@\"", "app"]
