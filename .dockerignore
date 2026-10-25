@@ -42,6 +42,7 @@ out/
 .github
 **/node_modules
 **/dist
+src/main/resources/static
 README.md
 LICENSE
 

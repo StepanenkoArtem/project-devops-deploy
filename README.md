@@ -148,23 +148,110 @@ See [Makefile](./Makefile)
 3. Restart the backend (`make run`) and open `http://localhost:8080/` — the React app will now be served directly by the
    Java application.
 
-### Running in Docker
+## Docker image
 
-Pass JVM flags via `JAVA_OPTS`:
+The [Dockerfile](./Dockerfile) builds the frontend, then the backend jar (running tests and Spotless), and packages the
+jar into a JRE image that runs as a non-root user. The published image is
+[`artemstepanenko/bulletins`](https://hub.docker.com/r/artemstepanenko/bulletins) on Docker Hub, built for `linux/amd64`
+only.
+
+Requirements: Docker with BuildKit (Docker Desktop, or Docker Engine 23+).
+
+### Build locally
 
 ```bash
-docker run --rm -p 8080:8080 \
-  -e JAVA_OPTS="-Xms256m -Xmx512m -Dspring.profiles.active=prod" \
-  ...
+docker build -t bulletins:local .
 ```
 
-Useful JVM options:
+The build compiles the frontend and runs the backend test suite, so the first run takes a few minutes; later builds
+reuse cached layers. On Apple Silicon it produces a `linux/arm64` image, which is fine for local runs but not for the
+cluster (see [Publish manually](#publish-manually)).
 
-- `-Xms/-Xmx` — set memory limits inside the container.
-- `-XX:+UseContainerSupport` / `-XX:ActiveProcessorCount` (these respect cgroup limits by default).
-- `-Dspring.profiles.active=prod` — switch the profile without recompiling.
-- `-Dlogging.level.root=INFO` or Spring environment variables (`SPRING_DATASOURCE_URL`, `STORAGE_S3_BUCKET`, etc.) —
-  configure external services.
+### Run
+
+```bash
+docker run --rm -p 8080:8080 -p 9090:9090 bulletins:local
+```
+
+Check that both ports answer:
+
+```bash
+curl http://localhost:8080/api/bulletins
+curl http://localhost:9090/actuator/health/readiness
+```
+
+Without extra variables the container runs the `dev` profile: in-memory H2 with seeded bulletins and local image
+storage. For `prod`, pass `SPRING_PROFILES_ACTIVE=prod` plus the database and S3 variables from
+[Environment variables](#environment-variables).
+
+The image reads these variables at start-up:
+
+| Variable                 | Default in the image | Purpose                                                  |
+| ------------------------ | -------------------- | -------------------------------------------------------- |
+| `SERVER_PORT`            | `8080`               | Application traffic                                      |
+| `MANAGEMENT_SERVER_PORT` | `9090`               | Actuator: health probes, metrics, `/actuator/prometheus` |
+| `JAVA_OPTS`              | empty                | JVM flags, e.g. `-XX:MaxRAMPercentage=75` or `-Xmx512m`  |
+
+`-p` publishes the port the application actually listens on, so change the mapping together with `SERVER_PORT` or
+`MANAGEMENT_SERVER_PORT`. Without `JAVA_OPTS` the JVM caps the heap at 25% of the container memory limit; prefer
+`-XX:MaxRAMPercentage` over a fixed `-Xmx` so the heap follows the limit.
+
+To run the published image on Apple Silicon, add `--platform linux/amd64` (it runs under emulation):
+
+```bash
+docker run --rm --platform linux/amd64 -p 8080:8080 -p 9090:9090 artemstepanenko/bulletins:sha-<commit>
+```
+
+### Publish manually
+
+CI publishes every push to `main` (see [Publish from CI](#publish-from-ci)); push by hand only when CI is not an option.
+
+1. Create a Docker Hub personal access token with Read & Write scope (Account settings → Personal access tokens).
+2. Log in and paste the token when prompted for a password, so it never lands in shell history:
+
+    ```bash
+    docker login -u artemstepanenko
+    ```
+
+3. Build for the cluster's platform and push. Kubernetes nodes on DigitalOcean are `linux/amd64`, and an `arm64` image
+   built on Apple Silicon fails there with `exec format error`; the cross-platform build runs under emulation and is
+   slower.
+
+    ```bash
+    if [ -n "$(git status --porcelain)" ]; then
+      echo "Working tree is not clean: commit or stash your changes first" >&2
+    else
+      TAG=$(git describe --always --dirty)
+      docker build --platform linux/amd64 -t "artemstepanenko/bulletins:$TAG" . &&
+        docker push "artemstepanenko/bulletins:$TAG"
+    fi
+    ```
+
+    The snippet refuses to build from a working tree with uncommitted or untracked files. A pushed tag must always point
+    to the same image, and the build context takes every file on disk, not only committed ones.
+
+### Publish from CI
+
+The `build` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs after `lint` and `tests`:
+
+- on pull requests it builds the image without pushing, which proves the Dockerfile still builds;
+- on pushes to `main` it pushes two tags: `sha-<short commit>` and `latest`.
+
+Deploy by the `sha-*` tag: it pins the exact commit, while `latest` moves with every push.
+
+A fork needs two repository settings (Settings → Secrets and variables → Actions):
+
+| Name                 | Kind     | Value                                         |
+| -------------------- | -------- | --------------------------------------------- |
+| `DOCKERHUB_USERNAME` | variable | Docker Hub user that owns the repository      |
+| `DOCKERHUB_TOKEN`    | secret   | Personal access token with Read & Write scope |
+
+```bash
+gh variable set DOCKERHUB_USERNAME --body <user>
+gh secret set DOCKERHUB_TOKEN
+```
+
+`gh secret set` prompts for the value, so the token stays out of shell history.
 
 ## Monitoring / management ports
 

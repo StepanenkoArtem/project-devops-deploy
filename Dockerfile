@@ -10,12 +10,12 @@ RUN npm run build
 # Stage 2: Build Java App
 FROM eclipse-temurin:21-jdk AS build_app
 WORKDIR /app
-RUN rm -rf src/main/resources/static && mkdir -p src/main/resources/static
-COPY --from=frontend /app/dist src/main/resources/static
 COPY gradlew build.gradle.kts ./
 COPY gradle ./gradle
 RUN ./gradlew --no-daemon dependencies
 COPY src ./src
+RUN rm -rf src/main/resources/static
+COPY --from=frontend /app/dist src/main/resources/static
 RUN ./gradlew --no-daemon build
 RUN cp build/libs/app-*-SNAPSHOT.jar app.jar
 
