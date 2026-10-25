@@ -25,6 +25,7 @@ WORKDIR /app
 RUN useradd -u 1001 -r -m app
 USER app
 COPY --from=build_app --chown=app:app /app/app.jar app.jar
-EXPOSE 8080
+ENV SERVER_PORT=8080 MANAGEMENT_SERVER_PORT=9090
+EXPOSE ${SERVER_PORT} ${MANAGEMENT_SERVER_PORT}
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar \"$@\"", "app"]
