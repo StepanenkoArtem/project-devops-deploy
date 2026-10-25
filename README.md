@@ -46,7 +46,7 @@ if you need to confirm a property name.
 
 ## Requirements
 
-- JDK 21+.
+- JDK 27
 - Gradle 9.2.1.
 - PostgreSQL only if you run the `prod` profile with an external database.
 - Make.

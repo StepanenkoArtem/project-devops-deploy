@@ -20,8 +20,13 @@ public class BulletinImageService {
 
     @Transactional
     public BulletinDto upload(Long id, MultipartFile file) {
-        var bulletin = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Bulletin %d not found".formatted(id)));
+        var bulletin =
+                repository
+                        .findById(id)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Bulletin %d not found".formatted(id)));
 
         String key = storageService.upload("bulletins/" + id, file);
         bulletin.setImageKey(key);

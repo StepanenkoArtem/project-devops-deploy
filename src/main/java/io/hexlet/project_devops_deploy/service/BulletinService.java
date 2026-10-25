@@ -24,11 +24,9 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class BulletinService {
 
-    @Autowired
-    private final BulletinRepository repository;
+    @Autowired private final BulletinRepository repository;
 
-    @Autowired
-    private final BulletinMapper mapper;
+    @Autowired private final BulletinMapper mapper;
 
     public BulletinDto create(BulletinRequest request) {
         Bulletin bulletin = mapper.toEntity(request);
@@ -36,8 +34,8 @@ public class BulletinService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<BulletinDto> findAll(int page, int perPage, String sort, Sort.Direction order,
-            Map<String, String> filters) {
+    public PageResponse<BulletinDto> findAll(
+            int page, int perPage, String sort, Sort.Direction order, Map<String, String> filters) {
         int pageIndex = Math.max(page - 1, 0);
         int pageSize = Math.max(perPage, 1);
         String sortProperty = StringUtils.hasText(sort) ? sort : "createdAt";
@@ -55,8 +53,10 @@ public class BulletinService {
     }
 
     private Bulletin getBulletin(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Bulletin %d not found".formatted(id)));
+        return repository
+                .findById(id)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Bulletin %d not found".formatted(id)));
     }
 
     public BulletinDto update(Long id, BulletinRequest request) {

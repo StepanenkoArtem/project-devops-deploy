@@ -15,8 +15,8 @@ run: ## Start the backend locally (dev profile, in-memory H2)
 update-gradle: ## Update the Gradle wrapper to 9.2.1
 	./gradlew wrapper --gradle-version 9.2.1
 
-update-deps: ## Look up dependency updates with refreshVersions
-	./gradlew refreshVersions
+update-deps: ## Bump dependency versions in gradle/libs.versions.toml
+	./gradlew versionCatalogUpdate
 
 install: ## Download Gradle dependencies
 	./gradlew dependencies

@@ -24,7 +24,7 @@ export default defineConfig([
     name: "react",
     ...react.configs.flat.recommended,
   },
-  reactHooks.configs["recommended-latest"],
+  reactHooks.configs.flat["recommended-latest"],
   {
     languageOptions: {
       globals: {

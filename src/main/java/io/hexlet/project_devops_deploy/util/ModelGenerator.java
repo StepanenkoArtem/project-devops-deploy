@@ -28,16 +28,29 @@ public class ModelGenerator {
 
     @PostConstruct
     private void init() {
-        bulletinModel = Instancio.of(Bulletin.class).ignore(Select.field(Bulletin::getId))
-                .ignore(Select.field(Bulletin::getCreatedAt)).ignore(Select.field(Bulletin::getUpdatedAt))
-                .supply(Select.field(Bulletin::getTitle), () -> faker.book().title())
-                .supply(Select.field(Bulletin::getDescription), () -> faker.lorem().paragraph(3))
-                .supply(Select.field(Bulletin::getState), () -> faker.options().option(BulletinState.values()))
-                .supply(Select.field(Bulletin::getContact), () -> faker.phoneNumber().phoneNumber())
-                .supply(Select.field(Bulletin::getPrice),
-                        () -> BigDecimal.valueOf(faker.number().randomDouble(2, 10, 10_000)))
-                .supply(Select.field(Bulletin::getImageKey),
-                        () -> "bulletins/%s.jpg".formatted(faker.internet().uuid()))
-                .toModel();
+        bulletinModel =
+                Instancio.of(Bulletin.class)
+                        .ignore(Select.field(Bulletin::getId))
+                        .ignore(Select.field(Bulletin::getCreatedAt))
+                        .ignore(Select.field(Bulletin::getUpdatedAt))
+                        .supply(Select.field(Bulletin::getTitle), () -> faker.book().title())
+                        .supply(
+                                Select.field(Bulletin::getDescription),
+                                () -> faker.lorem().paragraph(3))
+                        .supply(
+                                Select.field(Bulletin::getState),
+                                () -> faker.options().option(BulletinState.values()))
+                        .supply(
+                                Select.field(Bulletin::getContact),
+                                () -> faker.phoneNumber().phoneNumber())
+                        .supply(
+                                Select.field(Bulletin::getPrice),
+                                () ->
+                                        BigDecimal.valueOf(
+                                                faker.number().randomDouble(2, 10, 10_000)))
+                        .supply(
+                                Select.field(Bulletin::getImageKey),
+                                () -> "bulletins/%s.jpg".formatted(faker.internet().uuid()))
+                        .toModel();
     }
 }

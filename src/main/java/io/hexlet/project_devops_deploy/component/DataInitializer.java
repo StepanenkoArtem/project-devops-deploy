@@ -39,7 +39,8 @@ public class DataInitializer implements ApplicationRunner {
     private final ImageStorageService imageStorageService;
 
     private Resource[] sampleImages = new Resource[0];
-    private final ResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
+    private final ResourcePatternResolver resourceResolver =
+            new PathMatchingResourcePatternResolver();
 
     @PostConstruct
     void loadResources() {
@@ -60,11 +61,14 @@ public class DataInitializer implements ApplicationRunner {
 
         List<Resource> images = Arrays.stream(sampleImages).filter(Resource::exists).toList();
 
-        IntStream.range(0, BULLETIN_SEED_COUNT).mapToObj(i -> {
-            var bulletin = modelGenerator.generateBulletin();
-            attachSampleImageIfPossible(bulletin, images, i);
-            return bulletin;
-        }).forEach(repository::save);
+        IntStream.range(0, BULLETIN_SEED_COUNT)
+                .mapToObj(
+                        i -> {
+                            var bulletin = modelGenerator.generateBulletin();
+                            attachSampleImageIfPossible(bulletin, images, i);
+                            return bulletin;
+                        })
+                .forEach(repository::save);
     }
 
     private void attachSampleImageIfPossible(Bulletin bulletin, List<Resource> images, int index) {
@@ -95,7 +99,8 @@ public class DataInitializer implements ApplicationRunner {
         private final String contentType;
         private final byte[] content;
 
-        private InMemoryMultipartFile(String name, String originalFilename, String contentType, byte[] content) {
+        private InMemoryMultipartFile(
+                String name, String originalFilename, String contentType, byte[] content) {
             this.name = name;
             this.originalFilename = originalFilename;
             this.contentType = contentType;
