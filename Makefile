@@ -1,27 +1,33 @@
-test:
+.DEFAULT_GOAL := help
+
+help: ## Show this help
+	@awk 'BEGIN {FS = ":.*## "; printf "Usage: make \033[36m<target>\033[0m\n\n"} \
+		/^[a-zA-Z_-]+:.*## / {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+test: ## Run backend tests
 	./gradlew test
 
-start: run
+start: run ## Alias for run
 
-run:
+run: ## Start the backend locally (dev profile, in-memory H2)
 	./gradlew bootRun
 
-update-gradle:
+update-gradle: ## Update the Gradle wrapper to 9.2.1
 	./gradlew wrapper --gradle-version 9.2.1
 
-update-deps:
+update-deps: ## Look up dependency updates with refreshVersions
 	./gradlew refreshVersions
 
-install:
+install: ## Download Gradle dependencies
 	./gradlew dependencies
 
-build:
+build: ## Build the backend jar (also runs tests and lint)
 	./gradlew build
 
-lint:
+lint: ## Check code style with Spotless
 	./gradlew spotlessCheck
 
-lint-fix:
+lint-fix: ## Fix code style with Spotless
 	./gradlew spotlessApply
 
-.PHONY: build
+.PHONY: help test start run update-gradle update-deps install build lint lint-fix
