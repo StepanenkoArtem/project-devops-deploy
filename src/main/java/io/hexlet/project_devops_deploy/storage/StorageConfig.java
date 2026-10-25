@@ -12,7 +12,9 @@ public class StorageConfig {
     @Bean
     @ConditionalOnMissingBean(ImageStorageService.class)
     public ImageStorageService imageStorageService(S3StorageProperties properties) {
-        if (properties.bucket() != null && properties.region() != null && properties.accessKey() != null
+        if (properties.bucket() != null
+                && properties.region() != null
+                && properties.accessKey() != null
                 && properties.secretKey() != null) {
             return new S3ImageStorageService(properties);
         }

@@ -35,16 +35,26 @@ public class FileController {
 
     @GetMapping("/view")
     public FileUploadResponse view(@RequestParam("key") String key) {
-        String url = imageStorageService.getUrl(key)
-                .orElseThrow(() -> new ResourceNotFoundException("Image %s not found".formatted(key)));
+        String url =
+                imageStorageService
+                        .getUrl(key)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Image %s not found".formatted(key)));
 
         return FileUploadResponse.builder().key(key).url(url).build();
     }
 
     @GetMapping(value = "/raw", produces = MediaType.ALL_VALUE)
     public ResponseEntity<Resource> raw(@RequestParam("key") String key) {
-        Resource resource = imageStorageService.load(key)
-                .orElseThrow(() -> new ResourceNotFoundException("Image %s not found".formatted(key)));
+        Resource resource =
+                imageStorageService
+                        .load(key)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Image %s not found".formatted(key)));
 
         String contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
         try {
@@ -52,7 +62,11 @@ public class FileController {
         } catch (Exception ignored) {
         }
 
-        return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + resource.getFilename()).body(resource);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=" + resource.getFilename())
+                .body(resource);
     }
 }

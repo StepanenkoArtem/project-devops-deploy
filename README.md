@@ -46,7 +46,7 @@ if you need to confirm a property name.
 
 ## Requirements
 
-- JDK 21+.
+- JDK 27
 - Gradle 9.2.1.
 - PostgreSQL only if you run the `prod` profile with an external database.
 - Make.
@@ -227,12 +227,14 @@ CI publishes every push to `main` (see [Publish from CI](#publish-from-ci)); pus
     fi
     ```
 
-    The snippet refuses to build from a working tree with uncommitted or untracked files. A pushed tag must always point
-    to the same image, and the build context takes every file on disk, not only committed ones.
+   The snippet refuses to build from a working tree with uncommitted or untracked files. A pushed tag must always point
+   to the same image, and the build context takes every file on disk, not only committed ones.
 
 ### Publish from CI
 
-The `build` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs after `lint` and `tests`:
+The [`.github/workflows/docker.yml`](.github/workflows/docker.yml) workflow is separate from upstream's `ci.yml`, so
+syncing the fork never conflicts on it. It needs no lint or test job in front of it: the image build itself runs the
+backend tests and Spotless through `gradlew build`.
 
 - on pull requests it builds the image without pushing, which proves the Dockerfile still builds;
 - on pushes to `main` it pushes two tags: `sha-<short commit>` and `latest`.

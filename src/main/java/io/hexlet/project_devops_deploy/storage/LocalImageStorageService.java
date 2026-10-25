@@ -22,8 +22,15 @@ public class LocalImageStorageService implements ImageStorageService {
     public String upload(String keyPrefix, MultipartFile file) {
         try {
             Files.createDirectories(rootDir);
-            String extension = Optional.ofNullable(file.getOriginalFilename()).filter(StringUtils::hasText)
-                    .map(name -> name.contains(".") ? name.substring(name.lastIndexOf('.')) : "").orElse("");
+            String extension =
+                    Optional.ofNullable(file.getOriginalFilename())
+                            .filter(StringUtils::hasText)
+                            .map(
+                                    name ->
+                                            name.contains(".")
+                                                    ? name.substring(name.lastIndexOf('.'))
+                                                    : "")
+                            .orElse("");
             String normalizedPrefix = keyPrefix.replaceAll("[^a-zA-Z0-9/_-]", "-");
             String key = "%s/%s%s".formatted(normalizedPrefix, UUID.randomUUID(), extension);
             Path destination = rootDir.resolve(key).normalize();
@@ -68,8 +75,11 @@ public class LocalImageStorageService implements ImageStorageService {
 
     private String buildPublicUrl(String key) {
         try {
-            return ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/files/raw").queryParam("key", key)
-                    .build(true).toUriString();
+            return ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/api/files/raw")
+                    .queryParam("key", key)
+                    .build(true)
+                    .toUriString();
         } catch (IllegalStateException e) {
             return "/api/files/raw?key=" + URLEncoder.encode(key, StandardCharsets.UTF_8);
         }

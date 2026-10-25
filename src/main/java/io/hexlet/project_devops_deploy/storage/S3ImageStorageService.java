@@ -27,15 +27,19 @@ public class S3ImageStorageService implements ImageStorageService {
 
     public S3ImageStorageService(S3StorageProperties properties) {
         this.properties = properties;
-        StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider
-                .create(AwsBasicCredentials.create(properties.accessKey(), properties.secretKey()));
+        StaticCredentialsProvider credentialsProvider =
+                StaticCredentialsProvider.create(
+                        AwsBasicCredentials.create(properties.accessKey(), properties.secretKey()));
         this.client = buildClient(properties, credentialsProvider);
         this.presigner = buildPresigner(properties, credentialsProvider);
     }
 
-    private S3Client buildClient(S3StorageProperties props, StaticCredentialsProvider credentialsProvider) {
-        S3ClientBuilder builder = S3Client.builder().region(Region.of(props.region()))
-                .credentialsProvider(credentialsProvider);
+    private S3Client buildClient(
+            S3StorageProperties props, StaticCredentialsProvider credentialsProvider) {
+        S3ClientBuilder builder =
+                S3Client.builder()
+                        .region(Region.of(props.region()))
+                        .credentialsProvider(credentialsProvider);
 
         if (StringUtils.hasText(props.endpoint())) {
             builder.endpointOverride(URI.create(props.endpoint()));
@@ -44,9 +48,12 @@ public class S3ImageStorageService implements ImageStorageService {
         return builder.build();
     }
 
-    private S3Presigner buildPresigner(S3StorageProperties props, StaticCredentialsProvider credentialsProvider) {
-        S3Presigner.Builder builder = S3Presigner.builder().region(Region.of(props.region()))
-                .credentialsProvider(credentialsProvider);
+    private S3Presigner buildPresigner(
+            S3StorageProperties props, StaticCredentialsProvider credentialsProvider) {
+        S3Presigner.Builder builder =
+                S3Presigner.builder()
+                        .region(Region.of(props.region()))
+                        .credentialsProvider(credentialsProvider);
         if (StringUtils.hasText(props.endpoint())) {
             builder.endpointOverride(URI.create(props.endpoint()));
         }
@@ -55,19 +62,30 @@ public class S3ImageStorageService implements ImageStorageService {
 
     @Override
     public String upload(String keyPrefix, MultipartFile file) {
-        String extension = Optional.ofNullable(file.getOriginalFilename()).filter(StringUtils::hasText)
-                .map(candidate -> candidate.contains(".") ? candidate.substring(candidate.lastIndexOf('.')) : "")
-                .orElse("");
+        String extension =
+                Optional.ofNullable(file.getOriginalFilename())
+                        .filter(StringUtils::hasText)
+                        .map(
+                                candidate ->
+                                        candidate.contains(".")
+                                                ? candidate.substring(candidate.lastIndexOf('.'))
+                                                : "")
+                        .orElse("");
 
         String key = "%s/%s%s".formatted(keyPrefix, UUID.randomUUID(), extension);
 
-        PutObjectRequest request = PutObjectRequest.builder().bucket(properties.bucket()).key(key)
-                .contentType(
-                        Optional.ofNullable(file.getContentType()).orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE))
-                .build();
+        PutObjectRequest request =
+                PutObjectRequest.builder()
+                        .bucket(properties.bucket())
+                        .key(key)
+                        .contentType(
+                                Optional.ofNullable(file.getContentType())
+                                        .orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE))
+                        .build();
 
         try {
-            client.putObject(request, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+            client.putObject(
+                    request, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
         } catch (Exception e) {
             throw new StorageException("Failed to upload image", e);
         }
@@ -85,11 +103,15 @@ public class S3ImageStorageService implements ImageStorageService {
             return Optional.of(applyBaseUrl(properties.cdnUrl(), key));
         }
 
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder().bucket(properties.bucket()).key(key).build();
+        GetObjectRequest getObjectRequest =
+                GetObjectRequest.builder().bucket(properties.bucket()).key(key).build();
 
         try {
-            PresignedGetObjectRequest presigned = presigner
-                    .presignGetObject(builder -> builder.getObjectRequest(getObjectRequest).signatureDuration(URL_TTL));
+            PresignedGetObjectRequest presigned =
+                    presigner.presignGetObject(
+                            builder ->
+                                    builder.getObjectRequest(getObjectRequest)
+                                            .signatureDuration(URL_TTL));
             return Optional.of(presigned.url().toString());
         } catch (Exception e) {
             throw new StorageException("Failed to generate image URL", e);
